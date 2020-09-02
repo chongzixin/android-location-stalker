@@ -36,4 +36,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/remove_location_updates" />
+
+    <TextView
+        android:id="@+id/txtviewLoc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Current Location:"
+        android:textSize="24sp" />
+
 </LinearLayout>

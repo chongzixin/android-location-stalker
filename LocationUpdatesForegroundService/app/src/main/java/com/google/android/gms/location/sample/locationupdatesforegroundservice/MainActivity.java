@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -44,7 +45,13 @@ import androidx.core.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
+
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * The only activity in this sample.
@@ -100,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
+    private TextView mCurrentLocationTextView;
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -121,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        myReceiver = new MyReceiver();
+        myReceiver = new MyReceiver(new Handler());
         setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
@@ -140,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
         mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
+        mCurrentLocationTextView = (TextView) findViewById(R.id.txtviewLoc);
 
         mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -282,6 +291,12 @@ public class MainActivity extends AppCompatActivity implements
      * Receiver for broadcasts sent by {@link LocationUpdatesService}.
      */
     private class MyReceiver extends BroadcastReceiver {
+        private final Handler handler;
+
+        public MyReceiver(Handler handler) {
+            this.handler = handler;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
@@ -289,6 +304,14 @@ public class MainActivity extends AppCompatActivity implements
                 Toast.makeText(MainActivity.this, Utils.getLocationText(location),
                         Toast.LENGTH_SHORT).show();
             }
+
+            String currentText = mCurrentLocationTextView.getText().toString();
+            currentText = currentText + "\n" + DateFormat.getDateTimeInstance().format(new Date());
+            mCurrentLocationTextView.setText(currentText);
+
+            // TODO: start foreground service once it goes to background
+            // TODO: change to current time by new line.
+            // TODO: make it persist.
         }
     }
 
