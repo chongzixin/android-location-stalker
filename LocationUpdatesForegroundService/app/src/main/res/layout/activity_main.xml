@@ -37,11 +37,22 @@
         android:layout_height="wrap_content"
         android:text="@string/remove_location_updates" />
 
-    <TextView
-        android:id="@+id/txtviewLoc"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Current Location:"
-        android:textSize="24sp" />
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/txtviewLoc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:verticalScrollbarPosition="defaultPosition" />
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

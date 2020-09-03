@@ -24,7 +24,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -50,6 +49,12 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -129,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        myReceiver = new MyReceiver(new Handler());
+        myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
@@ -182,6 +187,11 @@ public class MainActivity extends AppCompatActivity implements
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
                 new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+
+        // take the string from file, add a line break after so that new rows get written nicely
+        String text = Utils.readFromFile(this) + "\n";
+
+        mCurrentLocationTextView.setText(text);
     }
 
     @Override
@@ -291,27 +301,23 @@ public class MainActivity extends AppCompatActivity implements
      * Receiver for broadcasts sent by {@link LocationUpdatesService}.
      */
     private class MyReceiver extends BroadcastReceiver {
-        private final Handler handler;
-
-        public MyReceiver(Handler handler) {
-            this.handler = handler;
-        }
-
         @Override
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             if (location != null) {
-                Toast.makeText(MainActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();
+                String locString = Utils.getLocationText(location);
+                String dateString = Utils.getCurrentDateTime();
+
+                Toast.makeText(MainActivity.this, locString, Toast.LENGTH_SHORT).show();
+
+                // TODO: make it persist.
+                String toWrite = dateString + ": " + locString;
+                Utils.writeToFile(toWrite, MainActivity.this);
+                // also append the string to the textview
+                mCurrentLocationTextView.setText(mCurrentLocationTextView.getText() + toWrite + "\n");
+
+                // TODO: start foreground service once it goes to background
             }
-
-            String currentText = mCurrentLocationTextView.getText().toString();
-            currentText = currentText + "\n" + DateFormat.getDateTimeInstance().format(new Date());
-            mCurrentLocationTextView.setText(currentText);
-
-            // TODO: start foreground service once it goes to background
-            // TODO: change to current time by new line.
-            // TODO: make it persist.
         }
     }
 
