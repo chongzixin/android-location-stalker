@@ -24,8 +24,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
+
+import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -114,6 +118,11 @@ public class MainActivity extends AppCompatActivity implements
     private Button mRemoveLocationUpdatesButton;
     private TextView mCurrentLocationTextView;
 
+    // for PowerManager
+    private boolean isWhitelisted;
+    private PowerManager powerManager;
+    private final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -131,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -182,14 +192,23 @@ public class MainActivity extends AppCompatActivity implements
                 Context.BIND_AUTO_CREATE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
                 new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
 
+        // get whitelist status from power manager
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        isWhitelisted = powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME);
+
         // take the string from file, add a line break after so that new rows get written nicely
         String text = Utils.readFromFile(this) + "\n";
+
+        // include whitelist status at the beginning of label
+        String whitelistStatus = isWhitelisted ? "whitelisted" : "not whitelisted";
+        text = whitelistStatus + text;
 
         mCurrentLocationTextView.setText(text);
     }
@@ -338,5 +357,18 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(true);
             mRemoveLocationUpdatesButton.setEnabled(false);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void addToWhitelist(View view) {
+        Intent intent = new Intent();
+        if (powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME))
+            intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        else {
+            // show the intent to add this app to whitelist
+            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + PACKAGE_NAME));
+        }
+        startActivity(intent);
     }
 }
