@@ -24,8 +24,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
+
+import androidx.annotation.RequiresApi;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -44,7 +48,19 @@ import androidx.core.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * The only activity in this sample.
@@ -100,6 +116,12 @@ public class MainActivity extends AppCompatActivity implements
     // UI elements.
     private Button mRequestLocationUpdatesButton;
     private Button mRemoveLocationUpdatesButton;
+    private TextView mCurrentLocationTextView;
+
+    // for PowerManager
+    private boolean isWhitelisted;
+    private PowerManager powerManager;
+    private final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -118,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
         mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
+        mCurrentLocationTextView = (TextView) findViewById(R.id.txtviewLoc);
 
         mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -168,11 +192,25 @@ public class MainActivity extends AppCompatActivity implements
                 Context.BIND_AUTO_CREATE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
                 new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+
+        // get whitelist status from power manager
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        isWhitelisted = powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME);
+
+        // take the string from file, add a line break after so that new rows get written nicely
+        String text = Utils.readFromFile(this) + "\n";
+
+        // include whitelist status at the beginning of label
+        String whitelistStatus = isWhitelisted ? "whitelisted" : "not whitelisted";
+        text = whitelistStatus + text;
+
+        mCurrentLocationTextView.setText(text);
     }
 
     @Override
@@ -286,8 +324,18 @@ public class MainActivity extends AppCompatActivity implements
         public void onReceive(Context context, Intent intent) {
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             if (location != null) {
-                Toast.makeText(MainActivity.this, Utils.getLocationText(location),
-                        Toast.LENGTH_SHORT).show();
+                String locString = Utils.getLocationText(location);
+                String dateString = Utils.getCurrentDateTime();
+
+                Toast.makeText(MainActivity.this, locString, Toast.LENGTH_SHORT).show();
+
+                // TODO: make it persist.
+                String toWrite = dateString + ": " + locString;
+                Utils.writeToFile(toWrite, MainActivity.this);
+                // also append the string to the textview
+                mCurrentLocationTextView.setText(mCurrentLocationTextView.getText() + toWrite + "\n");
+
+                // TODO: start foreground service once it goes to background
             }
         }
     }
@@ -309,5 +357,18 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(true);
             mRemoveLocationUpdatesButton.setEnabled(false);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void addToWhitelist(View view) {
+        Intent intent = new Intent();
+        if (powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME))
+            intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        else {
+            // show the intent to add this app to whitelist
+            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + PACKAGE_NAME));
+        }
+        startActivity(intent);
     }
 }
