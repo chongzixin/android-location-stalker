@@ -153,6 +153,8 @@ public class MainActivity extends AppCompatActivity implements
                 requestPermissions();
             }
         }
+
+        Utils.writeToFile("Started MainActivity on " + Utils.getCurrentDateTime(), this);
     }
 
     @Override

@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -75,7 +76,9 @@ class Utils {
     }
 
     static String getCurrentDateTime() {
-        return DateFormat.getDateTimeInstance().format(new Date());
+        SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss:SSS");
+        Date now = new Date();
+        return df.format(now);
     }
 
     static void writeToFile(String data,Context context) {
