@@ -29,7 +29,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 class Utils {
 
@@ -96,14 +100,16 @@ class Utils {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String receiveString = "";
-                StringBuilder stringBuilder = new StringBuilder();
+                List<String> tmp = new ArrayList<String>();
 
+                // read the file in reverse order and put into arraylist.
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append("\n").append(receiveString);
+                    tmp.add(receiveString);
                 }
+                Collections.reverse(tmp);
 
                 inputStream.close();
-                ret = stringBuilder.toString();
+                ret = String.join("\n", tmp);
             }
         }
         catch (FileNotFoundException e) {
@@ -115,3 +121,4 @@ class Utils {
         return ret;
     }
 }
+
