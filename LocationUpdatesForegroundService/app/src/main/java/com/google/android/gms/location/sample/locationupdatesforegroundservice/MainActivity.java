@@ -329,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements
 
                 Toast.makeText(MainActivity.this, locString, Toast.LENGTH_SHORT).show();
 
-                // TODO: make it persist.
+                // make it persist
                 String toWrite = dateString + ": " + locString;
                 Utils.writeToFile(toWrite, MainActivity.this);
                 // also append the string to the textview
