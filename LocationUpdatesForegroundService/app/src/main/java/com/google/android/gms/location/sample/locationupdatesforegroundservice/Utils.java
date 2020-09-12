@@ -19,6 +19,7 @@ package com.google.android.gms.location.sample.locationupdatesforegroundservice;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -105,14 +106,22 @@ class Utils {
                 String receiveString = "";
                 List<String> tmp = new ArrayList<String>();
 
+                StringBuilder stringBuilder = new StringBuilder();
                 // read the file in reverse order and put into arraylist.
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
                     tmp.add(receiveString);
+                    stringBuilder.append("\n").append(receiveString);
                 }
-                Collections.reverse(tmp);
 
                 inputStream.close();
-                ret = String.join("\n", tmp);
+
+                // only display in reverse order if it's above Android 8.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Collections.reverse(tmp);
+                    ret = String.join("\n", tmp);
+                } else {
+                    ret = stringBuilder.toString();
+                }
             }
         }
         catch (FileNotFoundException e) {
