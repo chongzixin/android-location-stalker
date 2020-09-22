@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements
     private boolean isWhitelisted;
     private PowerManager powerManager;
     private final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+    private PowerManager.WakeLock wakeLock;
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -155,6 +156,11 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         Utils.writeToFile("Started MainActivity on " + Utils.getCurrentDateTime(), this);
+
+        // hold a wakelock so that this service never gets killed
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LOCATION-STALKER_WAKELOCK:"+TAG);
+        wakeLock.acquire();
     }
 
     @Override
@@ -202,7 +208,6 @@ public class MainActivity extends AppCompatActivity implements
                 new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
 
         // get whitelist status from power manager
-        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         isWhitelisted = powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME);
 
         // take the string from file, add a line break after so that new rows get written nicely

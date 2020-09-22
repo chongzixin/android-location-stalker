@@ -163,11 +163,6 @@ public class LocationUpdatesService extends Service {
             // Set the Notification Channel for the Notification Manager.
             mNotificationManager.createNotificationChannel(mChannel);
         }
-
-        // hold a wakelock so that this service never gets killed
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
-        wakeLock.acquire();
     }
 
     @Override
@@ -181,8 +176,8 @@ public class LocationUpdatesService extends Service {
             removeLocationUpdates();
             stopSelf();
         }
-        // Tells the system to not try to recreate the service after it has been killed.
-        return START_NOT_STICKY;
+        // Tells the system to try to recreate the service after it has been killed.
+        return START_STICKY;
     }
 
     @Override
