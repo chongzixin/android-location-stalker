@@ -341,8 +341,6 @@ public class MainActivity extends AppCompatActivity implements
                 Utils.writeToFile(toWrite, MainActivity.this);
                 // also append the string to the textview
                 mCurrentLocationTextView.setText(mCurrentLocationTextView.getText() + toWrite + "\n");
-
-                // TODO: start foreground service once it goes to background
             }
         }
     }
