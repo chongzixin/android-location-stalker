@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        Utils.writeToFile("Started MainActivity on " + Utils.getCurrentDateTime(), this);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
     }
