@@ -40,6 +40,7 @@ import java.util.List;
 class Utils {
 
     static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting_location_updates";
+    static final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
 
     /**
      * Returns true if requesting location updates, otherwise returns false.

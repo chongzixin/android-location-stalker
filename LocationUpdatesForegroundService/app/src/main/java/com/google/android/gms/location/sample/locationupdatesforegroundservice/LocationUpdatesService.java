@@ -62,10 +62,6 @@ import com.google.android.gms.tasks.Task;
  * notification associated with that service is removed.
  */
 public class LocationUpdatesService extends Service {
-
-    private static final String PACKAGE_NAME =
-            "com.google.android.gms.location.sample.locationupdatesforegroundservice";
-
     private static final String TAG = LocationUpdatesService.class.getSimpleName();
 
     /**
@@ -73,17 +69,17 @@ public class LocationUpdatesService extends Service {
      */
     private static final String CHANNEL_ID = "channel_01";
 
-    static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
+    static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
 
-    static final String EXTRA_LOCATION = PACKAGE_NAME + ".location";
-    private static final String EXTRA_STARTED_FROM_NOTIFICATION = PACKAGE_NAME +
+    static final String EXTRA_LOCATION = Utils.PACKAGE_NAME + ".location";
+    private static final String EXTRA_STARTED_FROM_NOTIFICATION = Utils.PACKAGE_NAME +
             ".started_from_notification";
 
     private final IBinder mBinder = new LocalBinder();
 
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
-     * set to every 1 minute
+     * set to every 30 seconds
      */
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 30000;
 
