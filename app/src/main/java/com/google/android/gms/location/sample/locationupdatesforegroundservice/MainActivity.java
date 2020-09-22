@@ -121,6 +121,8 @@ public class MainActivity extends AppCompatActivity implements
     // for PowerManager
     private boolean isWhitelisted;
     private PowerManager powerManager;
+    private final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+    private PowerManager.WakeLock wakeLock;
 
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -155,7 +157,10 @@ public class MainActivity extends AppCompatActivity implements
 
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
 
+        // hold a wakelock so that this service never gets killed
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LOCATION-STALKER_WAKELOCK:"+TAG);
+        wakeLock.acquire();
     }
 
     @Override
@@ -203,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements
                 new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
 
         // get whitelist status from power manager
-        isWhitelisted = powerManager.isIgnoringBatteryOptimizations(Utils.PACKAGE_NAME);
+        isWhitelisted = powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME);
 
         // take the string from file, add a line break after so that new rows get written nicely
         String text = Utils.readFromFile(this) + "\n";
@@ -362,12 +367,12 @@ public class MainActivity extends AppCompatActivity implements
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void addToWhitelist(View view) {
         Intent intent = new Intent();
-        if (powerManager.isIgnoringBatteryOptimizations(Utils.PACKAGE_NAME))
+        if (powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME))
             intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
         else {
             // show the intent to add this app to whitelist
             intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:" + Utils.PACKAGE_NAME));
+            intent.setData(Uri.parse("package:" + PACKAGE_NAME));
         }
         startActivity(intent);
     }

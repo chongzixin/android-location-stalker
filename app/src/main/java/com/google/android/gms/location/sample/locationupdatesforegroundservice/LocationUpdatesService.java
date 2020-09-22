@@ -17,7 +17,6 @@
 package com.google.android.gms.location.sample.locationupdatesforegroundservice;
 
 import android.app.ActivityManager;
-import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -63,6 +62,10 @@ import com.google.android.gms.tasks.Task;
  * notification associated with that service is removed.
  */
 public class LocationUpdatesService extends Service {
+
+    private static final String PACKAGE_NAME =
+            "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+
     private static final String TAG = LocationUpdatesService.class.getSimpleName();
 
     /**
@@ -70,17 +73,17 @@ public class LocationUpdatesService extends Service {
      */
     private static final String CHANNEL_ID = "channel_01";
 
-    static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
+    static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
-    static final String EXTRA_LOCATION = Utils.PACKAGE_NAME + ".location";
-    private static final String EXTRA_STARTED_FROM_NOTIFICATION = Utils.PACKAGE_NAME +
+    static final String EXTRA_LOCATION = PACKAGE_NAME + ".location";
+    private static final String EXTRA_STARTED_FROM_NOTIFICATION = PACKAGE_NAME +
             ".started_from_notification";
 
     private final IBinder mBinder = new LocalBinder();
 
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
-     * set to every 30 seconds
+     * set to every 1 minute
      */
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 30000;
 
@@ -138,7 +141,6 @@ public class LocationUpdatesService extends Service {
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // this defines what happens when the GPS Provider receives new locations
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -165,9 +167,6 @@ public class LocationUpdatesService extends Service {
             // Set the Notification Channel for the Notification Manager.
             mNotificationManager.createNotificationChannel(mChannel);
         }
-
-        // start scheduling alarm
-        AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
     }
 
     @Override
@@ -258,12 +257,9 @@ public class LocationUpdatesService extends Service {
      */
     public void requestLocationUpdates() {
         Log.i(TAG, "Requesting location updates");
-        // store the setting and update the button labels
         Utils.setRequestingLocationUpdates(this, true);
-
         startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
         try {
-            // TODO: this is the part that requests for location and runs recurring task
             mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                     mLocationCallback, Looper.myLooper());
         } catch (SecurityException unlikely) {
@@ -280,6 +276,7 @@ public class LocationUpdatesService extends Service {
         Log.i(TAG, "Removing location updates");
         try {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            Utils.setRequestingLocationUpdates(this, false);
             stopSelf();
         } catch (SecurityException unlikely) {
             Utils.setRequestingLocationUpdates(this, true);
