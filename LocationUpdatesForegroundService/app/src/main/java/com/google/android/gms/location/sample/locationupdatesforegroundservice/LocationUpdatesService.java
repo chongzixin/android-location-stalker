@@ -135,6 +135,10 @@ public class LocationUpdatesService extends Service {
 
     @Override
     public void onCreate() {
+        // write debugging notes
+        Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         mLocationCallback = new LocationCallback() {
@@ -167,7 +171,10 @@ public class LocationUpdatesService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "Service started");
+        super.onStartCommand(intent, flags, startId);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
+
         boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,
                 false);
 
@@ -225,7 +232,23 @@ public class LocationUpdatesService extends Service {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
         mServiceHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onLowMemory Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onLowMemory Service");
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onTaskRemoved Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onTaskRemoved Service");
     }
 
     /**

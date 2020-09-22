@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        Utils.writeToFile("Started MainActivity on " + Utils.getCurrentDateTime(), this);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
 
         // hold a wakelock so that this service never gets killed
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
