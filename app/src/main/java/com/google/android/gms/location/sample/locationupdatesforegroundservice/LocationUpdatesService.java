@@ -21,7 +21,6 @@ import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -29,11 +28,13 @@ import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -82,7 +83,7 @@ public class LocationUpdatesService extends Service {
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      * set to every 30 seconds
      */
-    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 30000;
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 60*1000;
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
@@ -126,10 +127,16 @@ public class LocationUpdatesService extends Service {
      * The current location.
      */
     private Location mLocation;
+    // final variables that determine the origin of the location object
+    static final String LOCATION_EXTRAS = "SOURCE";
+    static final String EXTRA_FROM_ON_CREATE = "oncreate";
+    static final String EXTRA_FROM_LOCATION_REQUEST = "loc_req";
+    static final String EXTRA_FROM_ALARM_RECEIVER = "alarmreceiver";
 
     public LocationUpdatesService() {
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onCreate() {
         // write debugging notes
@@ -143,12 +150,19 @@ public class LocationUpdatesService extends Service {
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
+                Location location = locationResult.getLastLocation();
+
+                // add extra to the location
+                Bundle bundle = new Bundle();
+                bundle.putString(LOCATION_EXTRAS, EXTRA_FROM_LOCATION_REQUEST);
+                location.setExtras(bundle);
+
                 onNewLocation(locationResult.getLastLocation());
             }
         };
 
         createLocationRequest();
-        getLastLocation();
+        getLastLocation(EXTRA_FROM_ON_CREATE);
 
         HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
@@ -166,7 +180,8 @@ public class LocationUpdatesService extends Service {
             mNotificationManager.createNotificationChannel(mChannel);
         }
 
-        // start scheduling alarm
+        // schedule the first alarm
+        // TODO: schedule this only when the user starts requesting location.
         AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
     }
 
@@ -263,7 +278,6 @@ public class LocationUpdatesService extends Service {
 
         startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
         try {
-            // TODO: this is the part that requests for location and runs recurring task
             mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                     mLocationCallback, Looper.myLooper());
         } catch (SecurityException unlikely) {
@@ -280,6 +294,7 @@ public class LocationUpdatesService extends Service {
         Log.i(TAG, "Removing location updates");
         try {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            Utils.setRequestingLocationUpdates(this, false);
             stopSelf();
         } catch (SecurityException unlikely) {
             Utils.setRequestingLocationUpdates(this, true);
@@ -291,28 +306,12 @@ public class LocationUpdatesService extends Service {
      * Returns the {@link NotificationCompat} used as part of the foreground service.
      */
     private Notification getNotification() {
-        Intent intent = new Intent(this, LocationUpdatesService.class);
-
+        Context context = LocationStalkerApp.getContext();
         CharSequence text = Utils.getLocationText(mLocation);
 
-        // Extra to help us figure out if we arrived in onStartCommand via the notification or not.
-        intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
-
-        // The PendingIntent that leads to a call to onStartCommand() in this service.
-        PendingIntent servicePendingIntent = PendingIntent.getService(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // The PendingIntent to launch activity.
-        PendingIntent activityPendingIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), 0);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
-                        activityPendingIntent)
-                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
-                        servicePendingIntent)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setContentText(text)
-                .setContentTitle(Utils.getLocationTitle(this))
+                .setContentTitle(Utils.getLocationTitle(context))
                 .setOngoing(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -327,14 +326,21 @@ public class LocationUpdatesService extends Service {
         return builder.build();
     }
 
-    private void getLastLocation() {
+    public void getLastLocation(String source) {
         try {
+            // add in extra information to see where this request came from
+            final Bundle bundle = new Bundle();
+            bundle.putString(LOCATION_EXTRAS, source);
+
+            Log.i(TAG, "mfusedlocationclient: " + mFusedLocationClient);
             mFusedLocationClient.getLastLocation()
                     .addOnCompleteListener(new OnCompleteListener<Location>() {
                         @Override
                         public void onComplete(@NonNull Task<Location> task) {
                             if (task.isSuccessful() && task.getResult() != null) {
                                 mLocation = task.getResult();
+                                mLocation.setExtras(bundle);
+                                onNewLocation(mLocation);
                             } else {
                                 Log.w(TAG, "Failed to get location.");
                             }
@@ -346,21 +352,21 @@ public class LocationUpdatesService extends Service {
     }
 
     private void onNewLocation(Location location) {
-        Log.i(TAG, "New location: " + location);
-
         mLocation = location;
+        Context context = LocationStalkerApp.getContext();
+
+        String toWrite = Utils.getLocationStringToPersist(location);
+        Log.i(TAG, toWrite);
 
         // Notify anyone listening for broadcasts about the new location.
         Intent intent = new Intent(ACTION_BROADCAST);
         intent.putExtra(EXTRA_LOCATION, location);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
         // Update notification content if running as a foreground service.
-        if (serviceIsRunningInForeground(this)) {
+        if (serviceIsRunningInForeground(context)) {
             mNotificationManager.notify(NOTIFICATION_ID, getNotification());
-
-            String toWrite = Utils.getCurrentDateTime() + ": " + Utils.getLocationText(location);
-            Utils.writeToFile(toWrite, this);
+            Utils.writeToFile(toWrite, context);
         }
     }
 
@@ -394,7 +400,7 @@ public class LocationUpdatesService extends Service {
                 Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(
                 Integer.MAX_VALUE)) {
-            if (getClass().getName().equals(service.service.getClassName())) {
+            if (LocationUpdatesService.class.getName().equals(service.service.getClassName())) {
                 if (service.foreground) {
                     return true;
                 }

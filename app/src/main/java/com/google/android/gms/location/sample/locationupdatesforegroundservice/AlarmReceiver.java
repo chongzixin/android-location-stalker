@@ -1,29 +1,42 @@
 package com.google.android.gms.location.sample.locationupdatesforegroundservice;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
+import java.util.Locale;
 
 public class AlarmReceiver extends BroadcastReceiver {
     private static final int NOTIFICATION_SERVICE_ID = 101;
+    private static final int ALARM_FREQUENCY = 60 * 1000;
     private static final String TAG = "ALARM_RECEIVER";
-    static final String INTENT_EXTRA = "MESSAGE";
     static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onReceive(final Context context, Intent intent) {
         // schedule for next alarm
-        scheduleExactAlarm(context, (AlarmManager)context.getSystemService(Context.ALARM_SERVICE));
+        scheduleExactAlarm(context, (AlarmManager) context.getSystemService(Context.ALARM_SERVICE));
 
         PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_ALARMRECEIVER_WAKELOCK:ALARM_RECEIVER");
@@ -34,20 +47,42 @@ public class AlarmReceiver extends BroadcastReceiver {
             @Override
             public void run() {
                 // do job
-                String datetime = Utils.getCurrentDateTime();
-                Log.i(TAG, datetime + " in AlarmManager run()");
+                final Context context = LocationStalkerApp.getContext();
+                FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
 
-                writeDateTimeToFile(context);
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // assume the user already has permissions so we do nothing here.
+                    Log.i(TAG, "we are here");
+                    return;
+                }
+                fusedLocationProviderClient.getLastLocation()
+                        .addOnCompleteListener(new OnCompleteListener<Location>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Location> task) {
+                                if (task.isSuccessful() && task.getResult() != null) {
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString(LocationUpdatesService.LOCATION_EXTRAS, LocationUpdatesService.EXTRA_FROM_ALARM_RECEIVER);
 
-                // Notify anyone listening for broadcasts about the new location.
-                Intent intent = new Intent(ACTION_BROADCAST);
-                intent.putExtra(INTENT_EXTRA, datetime);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                    Location location = task.getResult();
+                                    location.setExtras(bundle);
 
-                // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
-                // update the notification
-                // context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
-            }
+                                    Log.i(TAG, "can get location here leh: " + location);
+                                    String toWrite = Utils.getLocationStringToPersist(location);
+                                    Utils.writeToFile(toWrite, context);
+
+                                    // Notify anyone listening for broadcasts about the new location.
+                                    Intent intent = new Intent(ACTION_BROADCAST);
+                                    intent.putExtra(LocationUpdatesService.EXTRA_LOCATION, location);
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+
+                                    // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
+                                    // update the notification
+                                    // context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
+                                } else {
+                                    Log.w(TAG, "Failed to get location.");
+                                }
+                            }
+                        }); }
         };
 
         handler.post(periodicUpdate);
@@ -59,18 +94,12 @@ public class AlarmReceiver extends BroadcastReceiver {
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
 
-        alarms.setAlarmClock(new AlarmManager.AlarmClockInfo(System.currentTimeMillis()+60*1000, null), pendingIntent);
-//        alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+60*1000-SystemClock.elapsedRealtime()%1000, pendingIntent);
+        alarms.setAlarmClock(new AlarmManager.AlarmClockInfo(System.currentTimeMillis()+ALARM_FREQUENCY, null), pendingIntent);
     }
 
     public static void cancelAlarm(Context context, AlarmManager alarms) {
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
         alarms.cancel(pendingIntent);
-    }
-
-    private void writeDateTimeToFile(Context context) {
-        String currentTime = Utils.getCurrentDateTime();
-        Utils.writeToFile(currentTime, context);
     }
 }

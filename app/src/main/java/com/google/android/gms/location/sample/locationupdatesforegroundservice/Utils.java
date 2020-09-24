@@ -83,6 +83,10 @@ class Utils {
         return df.format(now);
     }
 
+    static String getLocationStringToPersist(Location location) {
+        return getCurrentDateTime() + " (" + location.getExtras().getString(LocationUpdatesService.LOCATION_EXTRAS)+ "): " + getLocationText(location);
+    }
+
     static void writeToFile(String data,Context context) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("location.txt", Context.MODE_APPEND));
