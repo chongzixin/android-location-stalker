@@ -24,13 +24,14 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.util.Locale;
-
 public class AlarmReceiver extends BroadcastReceiver {
     private static final int NOTIFICATION_SERVICE_ID = 101;
-    private static final int ALARM_FREQUENCY = 60 * 1000;
+    private static final int ALARM_FREQUENCY = 5 * 1000;
     private static final String TAG = "ALARM_RECEIVER";
     static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
+
+    static final String LOCATION_EXTRAS = "SOURCE";
+    static final String EXTRA_FROM_ALARM_RECEIVER = "alarmreceiver";
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -61,7 +62,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                             public void onComplete(@NonNull Task<Location> task) {
                                 if (task.isSuccessful() && task.getResult() != null) {
                                     Bundle bundle = new Bundle();
-                                    bundle.putString(LocationUpdatesService.LOCATION_EXTRAS, LocationUpdatesService.EXTRA_FROM_ALARM_RECEIVER);
+                                    bundle.putString(LOCATION_EXTRAS, EXTRA_FROM_ALARM_RECEIVER);
 
                                     Location location = task.getResult();
                                     location.setExtras(bundle);
@@ -82,7 +83,8 @@ public class AlarmReceiver extends BroadcastReceiver {
                                     Log.w(TAG, "Failed to get location.");
                                 }
                             }
-                        }); }
+                        });
+            }
         };
 
         handler.post(periodicUpdate);

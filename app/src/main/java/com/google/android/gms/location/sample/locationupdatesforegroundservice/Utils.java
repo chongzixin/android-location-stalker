@@ -84,7 +84,7 @@ class Utils {
     }
 
     static String getLocationStringToPersist(Location location) {
-        return getCurrentDateTime() + " (" + location.getExtras().getString(LocationUpdatesService.LOCATION_EXTRAS)+ "): " + getLocationText(location);
+        return getCurrentDateTime() + " (" + location.getExtras().getString(AlarmReceiver.LOCATION_EXTRAS)+ "): " + getLocationText(location);
     }
 
     static void writeToFile(String data,Context context) {

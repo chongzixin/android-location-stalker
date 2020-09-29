@@ -30,6 +30,7 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -154,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
-
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
     }
 
@@ -169,12 +169,13 @@ public class MainActivity extends AppCompatActivity implements
         mCurrentLocationTextView = (TextView) findViewById(R.id.txtviewLoc);
 
         mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
                 if (!checkPermissions()) {
                     requestPermissions();
                 } else {
-                    mService.requestLocationUpdates();
+                    startService();
                 }
             }
         });
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements
         mRemoveLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mService.removeLocationUpdates();
+                stopService();
             }
         });
 
@@ -291,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted.
-                mService.requestLocationUpdates();
+                startService();
             } else {
                 // Permission denied.
                 setButtonsState(false);
@@ -327,7 +328,6 @@ public class MainActivity extends AppCompatActivity implements
             Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
             if (location != null) {
                 String locString = Utils.getLocationText(location);
-                String dateString = Utils.getCurrentDateTime();
 
                 Toast.makeText(MainActivity.this, locString, Toast.LENGTH_SHORT).show();
 
@@ -357,6 +357,22 @@ public class MainActivity extends AppCompatActivity implements
             mRequestLocationUpdatesButton.setEnabled(true);
             mRemoveLocationUpdatesButton.setEnabled(false);
         }
+    }
+
+    // methods to start and stop the foreground service.
+    private void startService() {
+        Log.i(TAG, "Requesting location updates");
+        // store the setting and update the button labels
+        Utils.setRequestingLocationUpdates(this, true);
+        Intent serviceIntent = new Intent(this, LocationUpdatesService.class);
+        startService(serviceIntent);
+    }
+
+    private void stopService() {
+        Log.i(TAG, "Removing location updates");
+        Utils.setRequestingLocationUpdates(getApplicationContext(), false);
+        Intent serviceIntent = new Intent(getApplicationContext(), LocationUpdatesService.class);
+        stopService(serviceIntent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
