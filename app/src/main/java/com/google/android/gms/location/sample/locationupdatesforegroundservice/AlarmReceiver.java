@@ -127,7 +127,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         alarms.setAlarmClock(new AlarmManager.AlarmClockInfo(System.currentTimeMillis()+ALARM_FREQUENCY, null), pendingIntent);
     }
 
-    // TODO: cancel alarm when updates are no longer required. 
+    // TODO: cancel alarm when updates are no longer required.
     public static void cancelAlarm(Context context, AlarmManager alarms) {
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);

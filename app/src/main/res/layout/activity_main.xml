@@ -44,6 +44,13 @@
         android:onClick="addToWhitelist"
         android:text="Add To Whitelist" />
 
+    <Button
+        android:id="@+id/btnManufacturerSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="showManufacturerSettings"
+        android:text="Show Manufacturer Settings" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
