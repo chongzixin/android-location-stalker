@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.gms.location.sample.locationupdatesforegroundservice;
+package com.chongzixin.locationstalker;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -30,7 +30,6 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,23 +44,13 @@ import android.net.Uri;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.core.app.ActivityCompat;
 
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.w3c.dom.Text;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.util.Date;
 
 /**
  * The only activity in this sample.
