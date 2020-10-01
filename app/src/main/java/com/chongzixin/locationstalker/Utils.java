@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.gms.location.sample.locationupdatesforegroundservice;
+package com.chongzixin.locationstalker;
 
 
 import android.content.Context;
@@ -32,7 +32,6 @@ import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -40,7 +39,7 @@ import java.util.List;
 class Utils {
 
     static final String KEY_REQUESTING_LOCATION_UPDATES = "requesting_location_updates";
-    static final String PACKAGE_NAME = "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+    static final String PACKAGE_NAME = "com.chongzixin.locationstalker";
 
     /**
      * Returns true if requesting location updates, otherwise returns false.

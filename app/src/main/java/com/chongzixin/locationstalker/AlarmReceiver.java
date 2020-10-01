@@ -1,4 +1,4 @@
-package com.google.android.gms.location.sample.locationupdatesforegroundservice;
+package com.chongzixin.locationstalker;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
@@ -78,34 +77,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             Utils.setRequestingLocationUpdates(context, false);
             Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
         }
-
-//
-//        Handler handler = new Handler();
-//        Runnable periodicUpdate = new Runnable() {
-//            @Override
-//            public void run() {
-//                // do job
-//                final Context context = LocationStalkerApp.getContext();
-//
-//                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-//                locationRequest.setInterval(LOCATION_INTERVAL);
-//                locationRequest.setFastestInterval(FASTEST_LOCATION_INTERVAL);
-//
-//                try {
-//                    Log.d(TAG, "requesting location updates");
-//                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-//                }
-//                catch (SecurityException unlikely) {
-//                    Utils.setRequestingLocationUpdates(context, false);
-//                    Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
-//                }
-//                catch (Exception e) {
-//                    Log.e(TAG, "Error here: " + e);
-//                }
-//            }
-//        };
-//
-//        handler.post(periodicUpdate);
 
         // TODO: consider removing locationupdates in future
         // Log.d(TAG, "removing location updates");
