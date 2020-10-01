@@ -1,4 +1,4 @@
-package com.google.android.gms.location.sample.locationupdatesforegroundservice;
+package com.chongzixin.locationstalker;
 
 import android.app.Application;
 import android.content.Context;

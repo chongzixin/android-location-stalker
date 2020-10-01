@@ -14,7 +14,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.android.gms.location.sample.locationupdatesforegroundservice">
+    package="com.chongzixin.locationstalker">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -29,8 +29,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:name=".LocationStalkerApp">
-        <activity android:name=".MainActivity">
+        android:name="com.chongzixin.locationstalker.LocationStalkerApp">
+        <activity android:name="com.chongzixin.locationstalker.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -39,19 +39,19 @@
 
         <!-- Foreground services in Q+ require type. -->
         <service
-            android:name=".LocationUpdatesService"
+            android:name="com.chongzixin.locationstalker.LocationUpdatesService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="location" />
         <!-- automatically start the foreground service on boot -->
-        <receiver android:name=".StartupBootReceiver">
+        <receiver android:name="com.chongzixin.locationstalker.StartupBootReceiver">
             <intent-filter>
                 <!-- REGISTER TO RECEIVE BOOT_COMPLETED EVENTS -->
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".AlarmReceiver"/>
+        <receiver android:name="com.chongzixin.locationstalker.AlarmReceiver"/>
     </application>
 
 </manifest>
