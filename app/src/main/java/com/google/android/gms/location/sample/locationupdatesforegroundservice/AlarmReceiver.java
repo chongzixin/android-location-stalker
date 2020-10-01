@@ -79,34 +79,6 @@ public class AlarmReceiver extends BroadcastReceiver {
             Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
         }
 
-//
-//        Handler handler = new Handler();
-//        Runnable periodicUpdate = new Runnable() {
-//            @Override
-//            public void run() {
-//                // do job
-//                final Context context = LocationStalkerApp.getContext();
-//
-//                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-//                locationRequest.setInterval(LOCATION_INTERVAL);
-//                locationRequest.setFastestInterval(FASTEST_LOCATION_INTERVAL);
-//
-//                try {
-//                    Log.d(TAG, "requesting location updates");
-//                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-//                }
-//                catch (SecurityException unlikely) {
-//                    Utils.setRequestingLocationUpdates(context, false);
-//                    Log.e(TAG, "Lost location permission. Could not request updates. " + unlikely);
-//                }
-//                catch (Exception e) {
-//                    Log.e(TAG, "Error here: " + e);
-//                }
-//            }
-//        };
-//
-//        handler.post(periodicUpdate);
-
         // TODO: consider removing locationupdates in future
         // Log.d(TAG, "removing location updates");
         // fusedLocationProviderClient.removeLocationUpdates(locationCallback);
