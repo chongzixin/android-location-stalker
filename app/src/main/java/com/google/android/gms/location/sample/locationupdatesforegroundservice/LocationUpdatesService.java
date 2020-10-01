@@ -185,6 +185,8 @@ public class LocationUpdatesService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+
+        // TODO: Xiaomi always calls this when swiped away. resulting in 1-2 min misses because alarm clock doesnt trigger. Look into why.
     }
 
     @Override
