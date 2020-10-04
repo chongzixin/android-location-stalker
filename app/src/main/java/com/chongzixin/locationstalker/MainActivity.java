@@ -16,21 +16,18 @@
 
 package com.chongzixin.locationstalker;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,6 +41,10 @@ import android.net.Uri;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 
 import androidx.core.app.ActivityCompat;
 
@@ -51,6 +52,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The only activity in this sample.
@@ -93,9 +99,6 @@ public class MainActivity extends AppCompatActivity implements
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
-
-    // The BroadcastReceiver used to listen from broadcasts from the service.
-    private MyReceiver myReceiver;
 
     // A reference to the service used to get location updates.
     private LocationUpdatesService mService = null;
@@ -150,7 +153,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        myReceiver = new MyReceiver();
         setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
@@ -160,8 +162,39 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
+        String txtLog = Utils.getCurrentDateTime() + " onCreate MainActivity";
+        Utils.writeToDB(txtLog);
+        Utils.writeToFile(txtLog, this);
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+
+        // Do the below when data changes. This could happen when
+        // 1) this device sends a location report to the server
+        // 2) someone changes directly from the Firebase Console (unlikely)
+        DatabaseReference dbRef = Utils.getDBRef();
+        dbRef.orderByChild("timestamp").limitToLast(1000).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Utils.LocationReport locReport = snapshot.getValue(Utils.LocationReport.class);
+
+                // display text on screen
+                String toDisplay = locReport.message;
+                mCurrentLocationTextView.setText(toDisplay + "\n" + mCurrentLocationTextView.getText());
+
+                Log.d("Data onChildAdded", locReport.message);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) { }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) { }
+        });
     }
 
     @Override
@@ -206,25 +239,19 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-                new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
 
         // get whitelist status from power manager
         isWhitelisted = powerManager.isIgnoringBatteryOptimizations(Utils.PACKAGE_NAME);
 
-        // take the string from file, add a line break after so that new rows get written nicely
-        String text = Utils.readFromFile(this) + "\n";
-
         // include whitelist status at the beginning of label
         String whitelistStatus = isWhitelisted ? "whitelisted" : "not whitelisted";
-        text = whitelistStatus + text;
+        String text = whitelistStatus + ".\nDownloading data so may take some time...";
 
         mCurrentLocationTextView.setText(text);
     }
 
     @Override
     protected void onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         super.onPause();
     }
 
@@ -321,27 +348,6 @@ public class MainActivity extends AppCompatActivity implements
                             }
                         })
                         .show();
-            }
-        }
-    }
-
-    /**
-     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
-     */
-    private class MyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
-            if (location != null) {
-                String locString = Utils.getLocationText(location);
-
-                Toast.makeText(MainActivity.this, locString, Toast.LENGTH_SHORT).show();
-
-                // make it persist
-                String toWrite = Utils.getLocationStringToPersist(location);
-                Utils.writeToFile(toWrite, MainActivity.this);
-                // also append the string to the textview
-                mCurrentLocationTextView.setText(mCurrentLocationTextView.getText() + toWrite + "\n");
             }
         }
     }

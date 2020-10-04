@@ -85,8 +85,10 @@ public class LocationUpdatesService extends Service {
     @Override
     public void onCreate() {
         // write debugging notes
-        Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
+        String txtLog = Utils.getCurrentDateTime() + " onCreate Service";
+        Log.i(TAG, txtLog);
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
 
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -109,8 +111,10 @@ public class LocationUpdatesService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
+        String txtLog = Utils.getCurrentDateTime() + " onStartCommand Service";
+        Log.i(TAG, txtLog);
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
 
         boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,
                 false);
@@ -169,7 +173,10 @@ public class LocationUpdatesService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+        String txtLog = Utils.getCurrentDateTime() + " onDestroy Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
+
 
         // TODO: Xiaomi always calls this when swiped away. resulting in 1-2 min misses because alarm clock doesnt trigger. Look into why.
     }
@@ -177,15 +184,19 @@ public class LocationUpdatesService extends Service {
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onLowMemory Service", this);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onLowMemory Service");
+        String txtLog = Utils.getCurrentDateTime() + " onLowMemory Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
+        Log.i(TAG, txtLog);
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onTaskRemoved Service", this);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onTaskRemoved Service");
+        String txtLog = Utils.getCurrentDateTime() + " onTaskRemoved Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
+        Log.i(TAG, txtLog);
     }
 
     /**

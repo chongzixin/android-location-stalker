@@ -20,6 +20,8 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,10 +30,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     private static final int NOTIFICATION_SERVICE_ID = 101;
     private static final int ALARM_FREQUENCY = 60*1000;
     private static final String TAG = "ALARM_RECEIVER";
-    static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
-
-    static final String LOCATION_EXTRAS = "SOURCE";
-    static final String EXTRA_FROM_ALARM_RECEIVER = "alarmreceiver";
 
     static final int LOCATION_INTERVAL = 10*1000;
     static final int FASTEST_LOCATION_INTERVAL = LOCATION_INTERVAL/2;
@@ -108,19 +106,10 @@ public class AlarmReceiver extends BroadcastReceiver {
     private static void processLocation(Location location) {
         Context context = LocationStalkerApp.getContext();
 
-        Bundle bundle = new Bundle();
-        bundle.putString(LOCATION_EXTRAS, EXTRA_FROM_ALARM_RECEIVER);
-
-        location.setExtras(bundle);
-
         Log.i(TAG, "can get location here leh: " + Utils.getLocationText(location));
-        String toWrite = Utils.getLocationStringToPersist(location);
+        String toWrite = Utils.getCurrentDateTime() + ": " + Utils.getLocationText(location);
         Utils.writeToFile(toWrite, context);
-
-        // Notify anyone listening for broadcasts about the new location.
-        Intent intent = new Intent(ACTION_BROADCAST);
-        intent.putExtra(LocationUpdatesService.EXTRA_LOCATION, location);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        Utils.writeToDB(toWrite);
 
         // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
         // update the notification

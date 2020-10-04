@@ -23,6 +23,10 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.android.gms.location.LocationRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -82,10 +86,6 @@ class Utils {
         return df.format(now);
     }
 
-    static String getLocationStringToPersist(Location location) {
-        return getCurrentDateTime() + " (" + location.getExtras().getString(AlarmReceiver.LOCATION_EXTRAS)+ "): " + getLocationText(location);
-    }
-
     static void writeToFile(String data,Context context) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("location.txt", Context.MODE_APPEND));
@@ -135,6 +135,53 @@ class Utils {
         }
 
         return ret;
+    }
+
+    // ALL METHODS RELATED TO PERSISTENCE TO FIREBASE
+    public static class LocationReport {
+        public String message;
+        public long timestamp;
+
+        // default no args constructor is required so that DataSnapshot can be casted
+        private LocationReport() {}
+
+        public LocationReport(String message) {
+            this.message = message;
+            this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+    static DatabaseReference getDBRef() {
+        String device = getDeviceName();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("location_reports/" + device);
+        return ref;
+    }
+
+    static void writeToDB(String message) {
+        DatabaseReference ref = getDBRef();
+        ref.push().setValue(new Utils.LocationReport(message));
+    }
+
+    static String getDeviceName() {
+        String manufacturer = Build.MANUFACTURER;
+        String model = Build.MODEL;
+        if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
+            return capitalize(model);
+        } else {
+            return capitalize(manufacturer) + "-" + model;
+        }
+    }
+
+    private static String capitalize(String s) {
+        if (s == null || s.length() == 0) {
+            return "";
+        }
+        char first = s.charAt(0);
+        if (Character.isUpperCase(first)) {
+            return s;
+        } else {
+            return Character.toUpperCase(first) + s.substring(1);
+        }
     }
 }
 
