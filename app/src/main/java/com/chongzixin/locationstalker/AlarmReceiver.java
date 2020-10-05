@@ -1,6 +1,7 @@
 package com.chongzixin.locationstalker;
 
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -110,8 +111,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         Utils.writeToFile(toWrite, context);
         Utils.writeToDB(toWrite);
 
-        // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
         // update the notification
-        // context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFICATION_SERVICE_ID, LocationUpdatesService.getNotification(toWrite));
     }
 }

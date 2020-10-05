@@ -165,7 +165,7 @@ public class LocationUpdatesService extends Service {
         if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
             Log.i(TAG, "Starting foreground service");
 
-            startForeground(NOTIFICATION_ID, getNotification());
+            startForeground(NOTIFICATION_ID, getNotification("Started foreground service."));
         }
         return true; // Ensures onRebind() is called when a client re-binds.
     }
@@ -202,10 +202,8 @@ public class LocationUpdatesService extends Service {
     /**
      * Returns the {@link NotificationCompat} used as part of the foreground service.
      */
-    private Notification getNotification() {
+    public static Notification getNotification(String text) {
         Context context = LocationStalkerApp.getContext();
-        // TODO: update the push notification.. for now just type a message
-        String text = "hello from getNotification()";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setContentText(text)

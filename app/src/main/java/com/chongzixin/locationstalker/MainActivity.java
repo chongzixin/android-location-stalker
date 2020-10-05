@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements
         // 1) this device sends a location report to the server
         // 2) someone changes directly from the Firebase Console (unlikely)
         DatabaseReference dbRef = Utils.getDBRef();
-        dbRef.orderByChild("timestamp").limitToLast(1000).addChildEventListener(new ChildEventListener() {
+        dbRef.orderByChild("timestamp").limitToLast(300).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Utils.LocationReport locReport = snapshot.getValue(Utils.LocationReport.class);
