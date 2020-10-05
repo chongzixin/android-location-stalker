@@ -67,7 +67,7 @@ public class LocationUpdatesService extends Service {
     /**
      * The identifier for the notification displayed for the foreground service.
      */
-    private static final int NOTIFICATION_ID = 12345678;
+    static final int NOTIFICATION_ID = 12345678;
 
     /**
      * Used to check whether the bound activity has really gone away and not unbound as part of an
@@ -104,7 +104,6 @@ public class LocationUpdatesService extends Service {
         }
 
         // schedule the first alarm
-        // TODO: schedule this only when the user starts requesting location.
         AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
     }
 
@@ -176,9 +175,6 @@ public class LocationUpdatesService extends Service {
         String txtLog = Utils.getCurrentDateTime() + " onDestroy Service";
         Utils.writeToFile(txtLog, this);
         Utils.writeToDB(txtLog);
-
-
-        // TODO: Xiaomi always calls this when swiped away. resulting in 1-2 min misses because alarm clock doesnt trigger. Look into why.
     }
 
     @Override
