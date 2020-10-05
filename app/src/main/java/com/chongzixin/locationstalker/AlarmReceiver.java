@@ -84,7 +84,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public static void scheduleExactAlarm(Context context, AlarmManager alarms) {
-        // TODO: remove when done debugging
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy HH:mm:ss:SSS");
         Date resultdate = new Date((System.currentTimeMillis()+ALARM_FREQUENCY));
         String dateToShow = sdf.format(resultdate);
