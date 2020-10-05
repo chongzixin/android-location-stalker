@@ -26,6 +26,7 @@ import android.util.Log;
 import com.google.android.gms.location.LocationRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -38,7 +39,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class Utils {
 
@@ -141,6 +144,8 @@ class Utils {
     public static class LocationReport {
         public String message;
         public long timestamp;
+        public Object server_timestamp; // declare as Object so that Android can serialise it during retrieval. It is set as a Map but returned as a Long
+
 
         // default no args constructor is required so that DataSnapshot can be casted
         private LocationReport() {}
@@ -148,6 +153,7 @@ class Utils {
         public LocationReport(String message) {
             this.message = message;
             this.timestamp = System.currentTimeMillis();
+            this.server_timestamp = ServerValue.TIMESTAMP;
         }
     }
 
