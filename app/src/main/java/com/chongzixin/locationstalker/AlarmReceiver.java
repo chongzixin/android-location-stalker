@@ -48,6 +48,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
     };
 
+    // TODO: fix the lag on first location permission
+    // there is currently a lag of up to 2 mins from the time when location permission is granted until when the first location report is generated
+    // this is because location reports are generated at a fixed frequency of every minute.
+    // the first call to the AlarmReceiver starts the location update request, and only at the second one will a location be available for the location report to be generated.
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onReceive(final Context context, Intent intent) {
