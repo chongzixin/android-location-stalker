@@ -1,6 +1,7 @@
 package com.chongzixin.locationstalker;
 
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,18 +21,15 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class AlarmReceiver extends BroadcastReceiver {
-    private static final int NOTIFICATION_SERVICE_ID = 101;
     private static final int ALARM_FREQUENCY = 60*1000;
     private static final String TAG = "ALARM_RECEIVER";
-    static final String ACTION_BROADCAST = Utils.PACKAGE_NAME + ".broadcast";
-
-    static final String LOCATION_EXTRAS = "SOURCE";
-    static final String EXTRA_FROM_ALARM_RECEIVER = "alarmreceiver";
 
     static final int LOCATION_INTERVAL = 10*1000;
     static final int FASTEST_LOCATION_INTERVAL = LOCATION_INTERVAL/2;
@@ -50,6 +48,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
     };
 
+    // TODO: fix the lag on first location permission
+    // there is currently a lag of up to 2 mins from the time when location permission is granted until when the first location report is generated
+    // this is because location reports are generated at a fixed frequency of every minute.
+    // the first call to the AlarmReceiver starts the location update request, and only at the second one will a location be available for the location report to be generated.
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onReceive(final Context context, Intent intent) {
@@ -86,7 +88,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public static void scheduleExactAlarm(Context context, AlarmManager alarms) {
-        // TODO: remove when done debugging
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy HH:mm:ss:SSS");
         Date resultdate = new Date((System.currentTimeMillis()+ALARM_FREQUENCY));
         String dateToShow = sdf.format(resultdate);
@@ -108,22 +109,13 @@ public class AlarmReceiver extends BroadcastReceiver {
     private static void processLocation(Location location) {
         Context context = LocationStalkerApp.getContext();
 
-        Bundle bundle = new Bundle();
-        bundle.putString(LOCATION_EXTRAS, EXTRA_FROM_ALARM_RECEIVER);
-
-        location.setExtras(bundle);
-
         Log.i(TAG, "can get location here leh: " + Utils.getLocationText(location));
-        String toWrite = Utils.getLocationStringToPersist(location);
+        String toWrite = Utils.getCurrentDateTime() + ": " + Utils.getLocationText(location);
         Utils.writeToFile(toWrite, context);
+        Utils.writeToDB(toWrite);
 
-        // Notify anyone listening for broadcasts about the new location.
-        Intent intent = new Intent(ACTION_BROADCAST);
-        intent.putExtra(LocationUpdatesService.EXTRA_LOCATION, location);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
-        // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
         // update the notification
-        // context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        notificationManager.notify(LocationUpdatesService.NOTIFICATION_ID, LocationUpdatesService.getNotification(toWrite));
     }
 }

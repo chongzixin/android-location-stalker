@@ -67,7 +67,7 @@ public class LocationUpdatesService extends Service {
     /**
      * The identifier for the notification displayed for the foreground service.
      */
-    private static final int NOTIFICATION_ID = 12345678;
+    static final int NOTIFICATION_ID = 12345678;
 
     /**
      * Used to check whether the bound activity has really gone away and not unbound as part of an
@@ -85,8 +85,10 @@ public class LocationUpdatesService extends Service {
     @Override
     public void onCreate() {
         // write debugging notes
-        Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
+        String txtLog = Utils.getCurrentDateTime() + " onCreate Service";
+        Log.i(TAG, txtLog);
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
 
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -102,15 +104,16 @@ public class LocationUpdatesService extends Service {
         }
 
         // schedule the first alarm
-        // TODO: schedule this only when the user starts requesting location.
         AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
+        String txtLog = Utils.getCurrentDateTime() + " onStartCommand Service";
+        Log.i(TAG, txtLog);
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
 
         boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,
                 false);
@@ -161,7 +164,7 @@ public class LocationUpdatesService extends Service {
         if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
             Log.i(TAG, "Starting foreground service");
 
-            startForeground(NOTIFICATION_ID, getNotification());
+            startForeground(NOTIFICATION_ID, getNotification("Started foreground service."));
         }
         return true; // Ensures onRebind() is called when a client re-binds.
     }
@@ -169,32 +172,34 @@ public class LocationUpdatesService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
-
-        // TODO: Xiaomi always calls this when swiped away. resulting in 1-2 min misses because alarm clock doesnt trigger. Look into why.
+        String txtLog = Utils.getCurrentDateTime() + " onDestroy Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onLowMemory Service", this);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onLowMemory Service");
+        String txtLog = Utils.getCurrentDateTime() + " onLowMemory Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
+        Log.i(TAG, txtLog);
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Utils.writeToFile(Utils.getCurrentDateTime() + " onTaskRemoved Service", this);
-        Log.i(TAG, Utils.getCurrentDateTime() + " onTaskRemoved Service");
+        String txtLog = Utils.getCurrentDateTime() + " onTaskRemoved Service";
+        Utils.writeToFile(txtLog, this);
+        Utils.writeToDB(txtLog);
+        Log.i(TAG, txtLog);
     }
 
     /**
      * Returns the {@link NotificationCompat} used as part of the foreground service.
      */
-    private Notification getNotification() {
+    public static Notification getNotification(String text) {
         Context context = LocationStalkerApp.getContext();
-        // TODO: update the push notification.. for now just type a message
-        String text = "hello from getNotification()";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setContentText(text)

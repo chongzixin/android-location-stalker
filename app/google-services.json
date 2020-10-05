@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1090361782927",
+    "firebase_url": "https://location-stalker.firebaseio.com",
+    "project_id": "location-stalker",
+    "storage_bucket": "location-stalker.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090361782927:android:19733585be86cae92eb6fa",
+        "android_client_info": {
+          "package_name": "com.chongzixin.locationstalker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1090361782927-de899i3odl41k475ot5bemmfdd78i9gc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa7bjzUGtkS1T1yHq7MrKZmyMx7x7j784"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1090361782927-de899i3odl41k475ot5bemmfdd78i9gc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
