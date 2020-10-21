@@ -113,9 +113,5 @@ public class AlarmReceiver extends BroadcastReceiver {
         String toWrite = Utils.getCurrentDateTime() + ": " + Utils.getLocationText(location);
         Utils.writeToFile(toWrite, context);
         Utils.writeToDB(toWrite);
-
-        // update the notification
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        notificationManager.notify(LocationUpdatesService.NOTIFICATION_ID, LocationUpdatesService.getNotification(toWrite));
     }
 }

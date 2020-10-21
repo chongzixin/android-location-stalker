@@ -11,11 +11,6 @@ public class StartupBootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.i("StartupBootReceiver", "boot completed from com.google.locationupdatesforegroundservice");
 
-        Intent serviceIntent = new Intent(context, LocationUpdatesService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
-        }
+        // TODO: change this to start alarm
     }
 }

@@ -16,6 +16,7 @@
 
 package com.chongzixin.locationstalker;
 
+import android.app.AlarmManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -93,44 +94,18 @@ import java.util.Map;
  * activity from the notification. The user can also remove location updates directly from the
  * notification. This dismisses the notification and stops the service.
  */
-public class MainActivity extends AppCompatActivity implements
-        SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     // Used in checking for runtime permissions.
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
-    // A reference to the service used to get location updates.
-    private LocationUpdatesService mService = null;
-
-    // Tracks the bound state of the service.
-    private boolean mBound = false;
-
     // UI elements.
-    private Button mRequestLocationUpdatesButton;
-    private Button mRemoveLocationUpdatesButton;
     private TextView mCurrentLocationTextView;
 
     // for PowerManager
     private boolean isWhitelisted;
     private PowerManager powerManager;
-
-    // Monitors the state of the connection to the service.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-            mBound = false;
-        }
-    };
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -154,13 +129,6 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Check that the user hasn't revoked permissions by going to Settings.
-        if (Utils.requestingLocationUpdates(this)) {
-            if (!checkPermissions()) {
-                requestPermissions();
-            }
-        }
 
         String txtLog = Utils.getCurrentDateTime() + " onCreate MainActivity";
         Utils.writeToDB(txtLog);
@@ -200,39 +168,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStart() {
         super.onStart();
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .registerOnSharedPreferenceChangeListener(this);
-
-        mRequestLocationUpdatesButton = (Button) findViewById(R.id.request_location_updates_button);
-        mRemoveLocationUpdatesButton = (Button) findViewById(R.id.remove_location_updates_button);
         mCurrentLocationTextView = (TextView) findViewById(R.id.txtviewLoc);
-
-        mRequestLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onClick(View view) {
-                if (!checkPermissions()) {
-                    requestPermissions();
-                } else {
-                    startService();
-                }
-            }
-        });
-
-        mRemoveLocationUpdatesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                stopService();
-            }
-        });
-
-        // Restore the state of the buttons when the activity (re)launches.
-        setButtonsState(Utils.requestingLocationUpdates(this));
-
-        // Bind to the service. If the service is in foreground mode, this signals to the service
-        // that since this activity is in the foreground, the service can exit foreground mode.
-        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection,
-                Context.BIND_AUTO_CREATE);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -256,19 +192,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    protected void onStop() {
-        if (mBound) {
-            // Unbind from the service. This signals to the service that this activity is no longer
-            // in the foreground, and the service can respond by promoting itself to a foreground
-            // service.
-            unbindService(mServiceConnection);
-            mBound = false;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .unregisterOnSharedPreferenceChangeListener(this);
-        super.onStop();
-    }
-
+    protected void onStop() { super.onStop(); }
     /**
      * Returns the current state of the permissions needed.
      */
@@ -314,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * Callback received when a permissions request has been completed.
      */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -325,10 +250,15 @@ public class MainActivity extends AppCompatActivity implements
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted.
-                startService();
+                Log.i(TAG, "Permission granted, requesting location updates");
+                // store the setting and update the button labels
+                Utils.setRequestingLocationUpdates(this, true);
+
+                // schedule the first alarm
+                AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
             } else {
                 // Permission denied.
-                setButtonsState(false);
+                Log.i(TAG, "Permission denied");
                 Snackbar.make(
                         findViewById(R.id.activity_main),
                         R.string.permission_denied_explanation,
@@ -352,39 +282,11 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        // Update the buttons state depending on whether location updates are being requested.
-        if (s.equals(Utils.KEY_REQUESTING_LOCATION_UPDATES)) {
-            setButtonsState(sharedPreferences.getBoolean(Utils.KEY_REQUESTING_LOCATION_UPDATES,
-                    false));
+    public void startLocation(View view) {
+        // start requesting for location
+        if (!checkPermissions()) {
+            requestPermissions();
         }
-    }
-
-    private void setButtonsState(boolean requestingLocationUpdates) {
-        if (requestingLocationUpdates) {
-            mRequestLocationUpdatesButton.setEnabled(false);
-            mRemoveLocationUpdatesButton.setEnabled(true);
-        } else {
-            mRequestLocationUpdatesButton.setEnabled(true);
-            mRemoveLocationUpdatesButton.setEnabled(false);
-        }
-    }
-
-    // methods to start and stop the foreground service.
-    private void startService() {
-        Log.i(TAG, "Requesting location updates");
-        // store the setting and update the button labels
-        Utils.setRequestingLocationUpdates(this, true);
-        Intent serviceIntent = new Intent(this, LocationUpdatesService.class);
-        startService(serviceIntent);
-    }
-
-    private void stopService() {
-        Log.i(TAG, "Removing location updates");
-        Utils.setRequestingLocationUpdates(getApplicationContext(), false);
-        Intent serviceIntent = new Intent(getApplicationContext(), LocationUpdatesService.class);
-        stopService(serviceIntent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

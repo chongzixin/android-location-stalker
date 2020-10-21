@@ -26,16 +26,11 @@
     tools:context="com.google.android.gms.location.sample.locationupdatesforegroundservice.MainActivity">
 
     <Button
-        android:id="@+id/request_location_updates_button"
+        android:id="@+id/btnStartLocation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/request_location_updates" />
-
-    <Button
-        android:id="@+id/remove_location_updates_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/remove_location_updates" />
+        android:onClick="startLocation"
+        android:text="Start Location" />
 
     <Button
         android:id="@+id/btnWhitelist"

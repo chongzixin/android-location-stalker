@@ -38,12 +38,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Foreground services in Q+ require type. -->
-        <service
-            android:name="com.chongzixin.locationstalker.LocationUpdatesService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="location" />
         <!-- automatically start the foreground service on boot -->
         <receiver android:name="com.chongzixin.locationstalker.StartupBootReceiver">
             <intent-filter>
